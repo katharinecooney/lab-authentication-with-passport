@@ -10,9 +10,18 @@ const passport = require('passport');
 const ensureLogin = require("connect-ensure-login");
 
 
+const checkIfAuthenticated = (req, res, next) => {
+  if(!req.user) res.redirect('/login'); // if not logged in / authenticated
+  else next();  // if logged in / authenticated
+}
+
+/***************** DISPLAY SIGNUP FORM **********************/
+
 passportRouter.get('/signup', (req, res, next) => {
   res.render('passport/signup')
 })
+
+/***************** POST NEW USER TO DB **********************/
 
 passportRouter.post('/signup', (req, res, next) => {
   const {username, password} = req.body;
@@ -43,10 +52,26 @@ passportRouter.post('/signup', (req, res, next) => {
   .catch(error => next(error))
 })
 
+/***************** DISPLAY LOGIN FORM **********************/
 
-passportRouter.get("/private-page", ensureLogin.ensureLoggedIn(), (req, res) => {
+passportRouter.get('/login', (req, res, next) => {
+  res.render('passport/login');
+});
+
+/***************** LOG THE USER IN **********************/
+
+passportRouter.post('/login', passport.authenticate("local", {
+  successRedirect: "/",
+  failureRedirect: "/login",
+  passReqToCallback: true
+}));
+
+/************* ALLOW ACCESS TO PRIVATE PAGE **************/
+
+passportRouter.get("/private-page", checkIfAuthenticated, (req, res) => {
   res.render("passport/private", { user: req.user });
 });
 
+/************* EXPORT THE ROUTER FOR USE IN INDEX.JS **************/
 
 module.exports = passportRouter;
